@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Template Tool</title>
+  <style>
+    .spinner {
+      display: none;
+      margin-top: 10px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .status {
+      font-style: italic;
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>Available Templates</h2>
+  <button onclick="loadTemplates()">Load List</button>
+  <div class="status" id="statusText"></div>
+  <div class="spinner" id="spinner"></div>
+  <ul id="templateList"></ul>
+
+  <script>
+    async function loadTemplates() {
+      const spinner = document.getElementById('spinner');
+      const status = document.getElementById('statusText');
+      const list = document.getElementById('templateList');
+
+      list.innerHTML = '';
+      spinner.style.display = 'inline-block';
+      status.innerText = 'Downloading & extracting templates...';
+
+      try {
+        const res = await fetch('/templates');
+        const templates = await res.json();
+
+        status.innerText = `Loaded ${templates.length} templates.`;
+        spinner.style.display = 'none';
+
+        templates.forEach(id => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            ${id}
+            <button onclick="convert('${id}')">Convert</button>
+            <a href="/converted/${id}.scene.json" target="_blank">Download</a>
+          `;
+          list.appendChild(li);
+        });
+
+      } catch (err) {
+        status.innerText = 'Error loading templates.';
+        spinner.style.display = 'none';
+      }
+    }
+
+    async function convert(id) {
+      const res = await fetch('/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template_id: id })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+    }
+  </script>
+</body>
+</html>
