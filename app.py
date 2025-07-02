@@ -26,7 +26,8 @@ def init_db():
         conn.execute('''
             CREATE TABLE IF NOT EXISTS templates (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE NOT NULL
+                name TEXT UNIQUE NOT NULL,
+                display_name TEXT
             );
         ''')
 init_db()
@@ -84,7 +85,7 @@ def convert_template():
 # Route 3: Serve converted .scene.json file (for frontend/editor)
 @app.route('/converted/<filename>', methods=['GET'])
 def serve_converted_file(filename):
-    return send_from_directory(CONVERTED_DIR, filename)
+    return send_from_directory(CONVERTED_DIR, filename ,  as_attachment=True)
 
 @app.route('/index.html')
 def index():

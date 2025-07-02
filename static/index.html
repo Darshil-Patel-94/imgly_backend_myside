@@ -74,6 +74,16 @@
       const data = await res.json();
       alert(data.message || data.error);
     }
+
+    function downloadScene(templateId) {
+  const url = `/converted/${templateId}.scene.json`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${templateId}.scene.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
   </script>
 </body>
 </html>

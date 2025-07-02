@@ -3,8 +3,12 @@ from pathlib import Path
 from os.path import basename, splitext
 
 def convert_to_scene_json(input_path, output_path):
-    # Derive base path from filename
-    base_path = Path(output_path).stem  # e.g., 'ogEAwyl0dBCAWo6ILtIBCfhgORzCIWAPVt3h0E'
+    BASE_URL = "http://161.97.121.37:4001"
+
+    # Correctly remove ".scene.json" extension
+    filename = Path(output_path).name
+    base_name = filename.replace(".scene.json", "")
+    base_path = f"{BASE_URL}/{base_name}"
 
     with open(input_path, "r", encoding="utf-8") as f:
         template = json.load(f)
@@ -19,14 +23,14 @@ def convert_to_scene_json(input_path, output_path):
     cover_base_names = set()
     x_offset = 50
 
-    # --- Step 1: Collect all video/cover base names ---
+    # Step 1: Collect all video/cover base names
     for vid in video_materials:
         cover_path = vid.get("cover_path")
         if cover_path and "video/cover/" in cover_path.replace("\\", "/"):
-            base_name = splitext(basename(cover_path))[0]
-            cover_base_names.add(base_name)
+            base_name_only = splitext(basename(cover_path))[0]
+            cover_base_names.add(base_name_only)
 
-    # --- Step 2: Add video and cover image blocks ---
+    # Step 2: Add video and cover image blocks
     for vid in video_materials:
         cover_path = vid.get("cover_path")
         video_path = vid.get("path")
@@ -49,7 +53,7 @@ def convert_to_scene_json(input_path, output_path):
                 "position": {}, "scale": {}
             })
 
-    # --- Step 3: Add mutable materials ---
+    # Step 3: Add mutable materials
     for mat in mutable_materials:
         path = mat.get("cover_path")
         if path:
@@ -61,21 +65,20 @@ def convert_to_scene_json(input_path, output_path):
                 "position": {}, "scale": {}
             })
 
-    # --- Step 4: Filter video/ blocks if same base name exists in video/cover/ ---
+    # Step 4: Filter video/ if same name exists in video/cover/
     final_image_blocks = []
     for block in raw_image_blocks:
         path = block["origin_path"].replace("\\", "/")
         if block["source"] == "video" and path.startswith("video/"):
-            base_name = splitext(basename(path))[0]
-            if base_name in cover_base_names:
+            base_name_only = splitext(basename(path))[0]
+            if base_name_only in cover_base_names:
                 print(f"❌ Skipping video/: {path} (matched in video/cover/)")
                 continue
-        # Assign position and scale
         block["position"] = {"x": x_offset * (len(final_image_blocks) + 1), "y": 100}
         block["scale"] = {"x": 1.0, "y": 1.0}
         final_image_blocks.append(block)
 
-    # --- Text blocks ---
+    # Step 5: Text blocks
     text_materials = template.get("materials", {}).get("texts", [])
     text_blocks = []
 
@@ -98,7 +101,7 @@ def convert_to_scene_json(input_path, output_path):
                 }
             })
 
-    # --- Audio blocks ---
+    # Step 6: Audio blocks
     audio_materials = template.get("materials", {}).get("audios", [])
     audio_blocks = []
 
@@ -109,14 +112,14 @@ def convert_to_scene_json(input_path, output_path):
             audio_blocks.append({
                 "type": "audio",
                 "uri": f"{base_path}/{path}",
-                "duration": duration*(10**(-5)),
+                "duration": duration * (10**-5),
                 "position": {"x": 0, "y": 0},
                 "metadata": {
                     "start": 0
                 }
             })
 
-    # --- Final Scene ---
+    # Final scene JSON
     scene_json = {
         "scene": {
             "type": "scene",
