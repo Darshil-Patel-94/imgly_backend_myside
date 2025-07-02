@@ -1,3 +1,4 @@
 Flask==2.2.2
 Requests==2.32.4
 gunicorn==23.0.0
+vercel-wsgi==0.5.1
