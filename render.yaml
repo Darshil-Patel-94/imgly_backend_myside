@@ -1,7 +1,10 @@
 services:
   - type: web
-    name: flask-capcut-backend
+    name: flask-backend
     env: python
     plan: free
     buildCommand: ""
-    startCommand: python app.py
+    startCommand: gunicorn app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
